@@ -21,7 +21,7 @@
                     }))
         };
     })
-    .Where(line =>
+    .Select(line =>
     {
         var largestFound = new Dictionary<string, int>();
 
@@ -33,13 +33,15 @@
                     largestFound[set.Color] = set.Count;
             }
         }
-        
-        return
-            largestFound.GetValueOrDefault("red") <= 12 &&
-            largestFound.GetValueOrDefault("green") <= 13 &&
-            largestFound.GetValueOrDefault("blue") <= 14;
+
+        return new
+        {
+            line.Id,
+            MinimumValues = largestFound
+        };
     })
-    .Select(game => game.Id)
+    .Select(game => game.MinimumValues.Aggregate(1, (acc, x) => acc * x.Value))
     .Sum();
+    
     
 Console.WriteLine(output);
