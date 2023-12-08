@@ -1,4 +1,4 @@
-﻿var output = File.ReadAllLines("input.txt")
+﻿var output = File.ReadLines("input.txt")
     .Select(line =>
     {
         var keyRes = line.Split(":");
@@ -42,6 +42,5 @@
     })
     .Select(game => game.MinimumValues.Aggregate(1, (acc, x) => acc * x.Value))
     .Sum();
-    
     
 Console.WriteLine(output);
