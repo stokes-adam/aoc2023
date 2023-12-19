@@ -1,52 +1,85 @@
 ﻿var lines = File.ReadAllLines("input.txt");
 
-var xLastIndex = lines[0].Length - 1;
-var yLastIndex = lines.Length - 1;
-
-var validNumbers = new List<int>();
-
+// per number buffer
 var numberBuffer = string.Empty;
+var coordBuffer = new List<(int x, int y)>();
 var isValidNumber = false;
 
+// value
+var coordsToNumbers = new Dictionary<string, HashSet<int>>();
+
+// find
 for (var x = 0; x < lines.Length; x++)
 {
     for (var y = 0; y < lines[x].Length; y++)
     {
-        var ch = lines[x][y];
+        var currentChar = lines[x][y];
+
+        var endOfNumber = !char.IsDigit(currentChar);
         
-        if (!char.IsDigit(ch))
+        if (endOfNumber)
         {
-            if (isValidNumber)
-                validNumbers.Add(int.Parse(numberBuffer));
-            
-            numberBuffer = string.Empty;
-            isValidNumber = false;
+            AddAndClear();
             continue;
         }
 
-        numberBuffer += ch;
+        numberBuffer += currentChar;
 
-        var isValidCoordinate =
-            (x > 0          && y > 0 &&          lines[x - 1][y - 1].IsValidatorSymbol()) || // check top left
-            (x > 0          &&                   lines[x - 1][y    ].IsValidatorSymbol()) || // check top
-            (x > 0          && y < yLastIndex && lines[x - 1][y + 1].IsValidatorSymbol()) || // check top right
-            (                  y > 0          && lines[x    ][y - 1].IsValidatorSymbol()) || // check left
-            (                  y < yLastIndex && lines[x    ][y + 1].IsValidatorSymbol()) || // check right
-            (x < xLastIndex && y > 0 &&          lines[x + 1][y - 1].IsValidatorSymbol()) || // check bottom left
-            (x < xLastIndex &&                   lines[x + 1][y    ].IsValidatorSymbol()) || // check bottom
-            (x < xLastIndex && y < yLastIndex && lines[x + 1][y + 1].IsValidatorSymbol()); // check bottom right
+        var positions = new (int xSeeker, int ySeeker)[]
+        {
+            (x - 1, y - 1),
+            (x - 1, y    ),
+            (x - 1, y + 1),
+            (x    , y - 1),
+            (x    , y + 1),
+            (x + 1, y - 1),
+            (x + 1, y    ),
+            (x + 1, y + 1),
+        };
 
-        if (isValidCoordinate)
+        foreach (var (xSeeker, ySeeker) in positions)
+        {
+            if (!Validate(xSeeker, ySeeker)) continue;
+            
+            coordBuffer.Add((xSeeker, ySeeker));
             isValidNumber = true;
+        }
     }
+
+    AddAndClear();
 }
 
-var output = validNumbers.Sum();
-
-Console.WriteLine(output);
-
-
-static class ArrayExtensions
+bool Validate(int xSeeker, int ySeeker)
 {
-    public static bool IsValidatorSymbol(this char c) => !(char.IsDigit(c) || c == '.');
+    if (xSeeker > lines[0].Length - 1 || xSeeker < 0) return false;
+    if (ySeeker > lines   .Length - 1 || ySeeker < 0) return false;
+
+    return lines[xSeeker][ySeeker] == '*';
+}
+
+void AddAndClear()
+{
+    if (isValidNumber)
+    {
+        var number = int.Parse(numberBuffer);
+        
+        foreach (var (x, y) in coordBuffer)
+        {
+            var key = x + "," + y;
+            
+            if (!coordsToNumbers.ContainsKey(key))
+                coordsToNumbers[key] = new();
+            
+            coordsToNumbers[key].Add(number);
+        }
+    }
+
+    ResetBuffers();
+}
+
+void ResetBuffers()
+{
+    numberBuffer = string.Empty;
+    coordBuffer = new();
+    isValidNumber = false;
 }
